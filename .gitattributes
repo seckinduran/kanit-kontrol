@@ -1,0 +1,8 @@
+*.py text eol=lf
+plugin.json text eol=lf
+README.md text eol=lf
+skills/**/SKILL.md text eol=lf
+LICENSE text eol=lf
+CONTRACT.json text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf

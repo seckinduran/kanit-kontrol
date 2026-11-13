@@ -1,0 +1,23 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "kanit-kontrol",
+  "version": "0.1.0",
+  "description": "JSON/SHA256 kanıt kataloglarındaki dosyaları çevrimdışı ve salt okunur doğrular.",
+  "author": {
+    "name": "Seckin Work contributors"
+  },
+  "license": "MIT",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Kanıt Kontrol",
+        "shortDescription": "Dosya bütünlüğünü doğrula",
+        "longDescription": "Seçtiğiniz JSON manifesti ve dosyalar için SHA256, bayt sayısı, eksik dosya ve yol durumlarını Türkçe gösterir. Dosyaları değiştirmez; kaynak incelemesi veya ürün kabulü üretmez.",
+        "developerName": "Seckin Work",
+        "category": "Productivity",
+        "capabilities": [],
+        "defaultPrompt": "Seçtiğim manifest ve dosyaların bütünlüğünü kontrol et; eksik veya değişmiş dosyaları Türkçe göster."
+      }
+    }
+  }
+}
