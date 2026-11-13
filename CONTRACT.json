@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "issue": 204,
+  "artifact": "Kanıt Kontrol",
+  "purpose": "Türkçe, çevrimdışı ve salt okunur JSON/SHA256 dosya bütünlüğü kontrolü; tüm projelere uygulanabilir.",
+  "entry": "skills/kanit-kontrol/scripts/kanit_kontrol.py",
+  "python": "3.10+ standard library only",
+  "input": {
+    "files": [
+      {
+        "path": "POSIX relative path",
+        "sha256": "64 hex",
+        "bytes": "optional nonnegative integer, excluding boolean"
+      }
+    ]
+  },
+  "cli": "python <entry> MANIFEST --root ROOT --json; default language Turkish, optional --lang tr|en",
+  "output": {
+    "status": "OK|FAILED|INVALID",
+    "message": "Turkish by default; integrity only, no semantic acceptance claim",
+    "summary": {
+      "total": "int",
+      "ok": "int"
+    },
+    "files": "array of relative paths and per-file status OK|MISMATCH|MISSING|SIZE_MISMATCH|INVALID_PATH|ERROR"
+  },
+  "exitCodes": {
+    "0": "all nonempty listed files match exact raw SHA256 and optional bytes",
+    "1": "missing, mismatch, size mismatch or unreadable file",
+    "2": "invalid manifest/path/type/duplicate/empty list or CLI error"
+  },
+  "constraints": [
+    "No input mutation, network, secret reading, subprocess, dependency, daemon or external server",
+    "Root explicit CLI selection; never follow manifest root field as authority",
+    "Reject absolute/drive/UNC/parent escape; resolved files must stay within selected root",
+    "Do not silently normalize bytes or line endings",
+    "Preserve the prewritten oracle and contract unchanged",
+    "Skill package must run only on user-selected supplied files and must not mint acceptance/identity/publication"
+  ],
+  "workerAllowedFiles": [
+    "plugin.json",
+    "README.md",
+    "LICENSE",
+    "skills/kanit-kontrol/SKILL.md",
+    "skills/kanit-kontrol/scripts/kanit_kontrol.py"
+  ],
+  "references": [
+    "https://www.gnu.org/software/coreutils/manual/html_node/sha2-utilities.html",
+    "https://docs.python.org/3/library/hashlib.html"
+  ],
+  "existingToolsAndGap": "GNU sha256sum already checks hashes; Python hashlib supplies the algorithm. This small stdlib wrapper adds existing JSON catalogue compatibility, relative-path diagnostics, size checks, Turkish report and a portable skill; no replacement for a source review or OS sandbox."
+}
