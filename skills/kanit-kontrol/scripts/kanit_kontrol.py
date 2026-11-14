@@ -146,6 +146,7 @@ def main():
         sys.exit(2)
 
     seen_paths = set()
+    seen_resolved_paths = set()
     file_results = []
     total_files = len(files_list)
     ok_count = 0
@@ -218,6 +219,13 @@ def main():
             overall_status = "INVALID"
             file_results.append({"path": rel_path_str, "status": "INVALID_PATH"})
             continue
+
+        # Eşdeğer yol yazımları aynı dosyayı ikinci kez doğrulamasın.
+        if target_file in seen_resolved_paths:
+            overall_status = "INVALID"
+            file_results.append({"path": rel_path_str, "status": "INVALID_PATH"})
+            continue
+        seen_resolved_paths.add(target_file)
 
         # Dosya varlık ve okunabilirlik kontrolü
         if not target_file.is_file():
