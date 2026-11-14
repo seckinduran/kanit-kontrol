@@ -18,6 +18,12 @@ from pathlib import Path
 def get_translation(lang: str, key: str, **kwargs) -> str:
     messages = {
         "tr": {
+            "invalid_cli": "Geçersiz komut. Manifest dosyasını ve --root klasörünü belirtin; yardım için --help kullanın.",
+            "cli_description": "Kanıt Kontrol - SHA256 Bütünlük Denetleyicisi",
+            "manifest_help": "Manifest JSON dosya yolu",
+            "root_help": "Kök dizin",
+            "json_help": "Yalnız JSON çıktı üret",
+            "language_help": "Dil seçimi (tr|en)",
             "all_verified": "Tüm dosyalar başarıyla doğrulandı.",
             "some_failed": "Bazı dosyalarda bütünlük uyumsuzluğu veya eksiklik tespit edildi.",
             "invalid_manifest": "Geçersiz manifest dosyası, eksik veya hatalı yapı.",
@@ -25,6 +31,12 @@ def get_translation(lang: str, key: str, **kwargs) -> str:
             "file_line": "  - {path}: {status}",
         },
         "en": {
+            "invalid_cli": "Invalid command. Provide a manifest and --root folder; use --help for usage.",
+            "cli_description": "Evidence Check - SHA256 Integrity Verifier",
+            "manifest_help": "Manifest JSON file path",
+            "root_help": "Root folder",
+            "json_help": "Produce JSON output only",
+            "language_help": "Output language (tr|en)",
             "all_verified": "All files verified successfully.",
             "some_failed": "Integrity mismatch or missing files detected.",
             "invalid_manifest": "Invalid manifest file or structure.",
@@ -62,47 +74,51 @@ def compute_sha256(file_path: Path) -> str:
     return sha.hexdigest()
 
 
+def requested_cli_options(argv):
+    options = argv[:argv.index("--")] if "--" in argv else argv
+    lang = "tr"
+    for index, value in enumerate(options):
+        choice = options[index + 1] if value == "--lang" and index + 1 < len(options) else (value.split("=", 1)[1] if value.startswith("--lang=") else None)
+        if choice in ("tr", "en"):
+            lang = choice
+    return lang, "--json" in options
+
+
+def report_cli_error(lang, json_output):
+    report = {
+        "status": "INVALID",
+        "message": get_translation(lang, "invalid_cli"),
+        "summary": {"total": 0, "ok": 0},
+        "files": []
+    }
+    print(json.dumps(report, ensure_ascii=False) if json_output else report["message"])
+    sys.exit(2)
+
+
+class CliArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        # Tüm ayrıştırma hataları aynı, dil seçimini koruyan rapor yoluna gider.
+        raise SystemExit(2)
+
+
 def main():
     configure_utf8_stdout()
-
-    parser = argparse.ArgumentParser(description="Kanıt Kontrol - SHA256 Bütünlük Denetleyicisi")
-    parser.add_argument("manifest", type=str, nargs="?", help="Manifest JSON dosya yolu")
-    parser.add_argument("--root", type=str, help="Kök dizin")
-    parser.add_argument("--json", action="store_true", help="Yalnız JSON çıktı üret")
-    parser.add_argument("--lang", type=str, default="tr", choices=["tr", "en"], help="Dil seçimi (tr|en)")
+    cli_lang, cli_json = requested_cli_options(sys.argv[1:])
+    parser = CliArgumentParser(description=get_translation(cli_lang, "cli_description"))
+    parser.add_argument("manifest", type=str, nargs="?", help=get_translation(cli_lang, "manifest_help"))
+    parser.add_argument("--root", type=str, help=get_translation(cli_lang, "root_help"))
+    parser.add_argument("--json", action="store_true", help=get_translation(cli_lang, "json_help"))
+    parser.add_argument("--lang", type=str, default="tr", choices=["tr", "en"], help=get_translation(cli_lang, "language_help"))
 
     try:
-        # sys.argv kontrolü ile --help argümanının varlığını doğrudan yakalayalım
-        if "--help" in sys.argv or "-h" in sys.argv:
-            parser.print_help()
-            sys.exit(0)
-
         args = parser.parse_args()
     except SystemExit as exc:
-        code = exc.code if isinstance(exc.code, int) else (0 if exc.code is None else 1)
-        if code == 0:
+        if exc.code == 0:
             sys.exit(0)
-        error_report = {
-            "status": "INVALID",
-            "message": "Geçersiz argüman veya komut satırı hatası.",
-            "summary": {"total": 0, "ok": 0},
-            "files": []
-        }
-        if "--json" in sys.argv:
-            print(json.dumps(error_report, ensure_ascii=False))
-        sys.exit(2)
+        report_cli_error(cli_lang, cli_json)
 
-    # Manifest veya root eksikse argparse eksik argüman hatası verir ama emin olalım
     if not args.manifest or not args.root:
-        error_report = {
-            "status": "INVALID",
-            "message": "Geçersiz argüman veya komut satırı hatası.",
-            "summary": {"total": 0, "ok": 0},
-            "files": []
-        }
-        if args.json:
-            print(json.dumps(error_report, ensure_ascii=False))
-        sys.exit(2)
+        report_cli_error(args.lang, args.json)
 
     lang = args.lang
     root_path = Path(args.root).resolve()
